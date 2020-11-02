@@ -20,7 +20,7 @@ Store configurations in a json file in the following format
 |Key|Description|type|default|required|
 |----------------|---------|----------------------|-----------------------------|----
 |`master_ip`|IP for master server|`str`|`null`| yes
-|`master_port`|Port for master server|`int`|`5006`| yes
+|`master_port`|Port for master server|`int`|`5600`| yes
 |`cp_ip`|Control Panel webserver IP, possible values include `"localhost"`|`str`|`0.0.0.0`| yes
 |`cp_port`|Control Panel webserver port|`int`|`7000`| yes
 |`master_db_engine` | DB engine type (ie mysql, sqlite3) |`str`|`mysql`| yes
