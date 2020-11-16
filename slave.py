@@ -119,13 +119,11 @@ class ControlPanelv2 (object):
         obj_args = data.get('obj_args')
         sid = data['sid']
 
-        cnt = data.get('cnt')
-        per = data.get('per')
+        cnt = data.get('cnt', 0)
+        per = data.get('per', 10)
 
-        if not cnt:
-            cnt = 0
-        if not per or per > 30:
-            per = 10
+        if not per or per > 100:
+            per = 100
 
         offset = cnt * per
         with self.master_db.scoped_session() as session:
@@ -351,7 +349,7 @@ class ControlPanelv2 (object):
 
         except Exception as e:
             driver.log.critical("Webserver CPv2 has broke: {}".format(e))
-            print(traceback.print_exc())
+            driver.log.critical(traceback.format_exc())
 
         finally:
             check_emitter_thread.join()
@@ -599,6 +597,16 @@ def return_css(filename):
 def return_js(filename):
     path = os.path.join(cp_dist_dir, 'js/')#, filename)
     return send_from_directory(path, filename)
+
+@app.route('/api/slaves/launched/<launch_tag>', methods=['GET'])
+def api_slaves_launched_GET(launch_tag):
+        creds = driver.get_tag_data(launch_tag, delay=1)
+        if not creds:
+            driver.log.warning("No more credentials for launch tag [{}]".format(launch_tag), path='api/slaves/launched/.')
+            #No more creds
+            return "", 403
+        return "{}\n{}".format(creds['uuid'], creds['token'])
+
 
 @app.route('/api/user/verify', methods=['POST'])
 def api_user_verifiy_POST():
