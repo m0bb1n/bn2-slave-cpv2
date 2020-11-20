@@ -1,7 +1,9 @@
 from bn2.drivers.slavedriver import SlaveDriver
 import traceback
+import logging
 from bn2.db import db
 from bn2.db import masterdb
+
 
 from bn2.utils.msgqueue \
     import create_local_task_message, INBOX_SYS_CRITICAL_MSG, INBOX_SYS_MSG, OUTBOX_SYS_MSG, \
@@ -423,18 +425,7 @@ class ControlPanelv2 (object):
 
     @driver.route('bd.sd.@CPv2.redirect')
     def bd_sd_CPv2_redirect(self, data, route_meta):
-        k ='__redirect_msg'
-        redirect_msg = self.get_redirect_msg(data)
-        data[k] = redirect_msg
-
-
-        #pass user_token and pass it here
-        #for now will use CPV2 route meta and token
-        data['route_meta'] = route_meta
-        data['route_meta']['origin']=driver.uuid
-        msg = driver.create_local_task_message('bd.@md.Slave.CPv2.redirected', data)
-
-        driver.send_message_to_master(msg)
+        raise NotImplemented
 
     @driver.route('bd.sd.@CPv2.emit')
     def bd_sd_CPv2_emit(self, data, route_meta):
@@ -481,7 +472,7 @@ class ControlPanelv2 (object):
         self.updateStream('warehouse/table/rows', data, sids=[data['sid']], has_obj_id=False)
 
     @driver.route('bd.sd.@CPv2.users.alerts')
-    def bd_sd_CPv2_user_alert(self, data, route_meta):
+    def bd_sd_CPv2_users_alert(self, data, route_meta):
         self.updateStream('alerts', data['alerts'], sids=data['sids'])
 
     @driver.route('bd.sd.@CPv2.logs.master')
@@ -578,6 +569,8 @@ CORS(app)
 
 socketio = SocketIO(app, async_mode='threading')
 socketio.init_app(app, cors_allowed_origins="*")
+
+logging.getLogger('werkzeug').setLevel(logging.ERROR)
 
 @app.route('/favicon.ico')
 def return_favicon():
@@ -697,9 +690,17 @@ class Webserver:
     @socketio.on('redirect')
     def socket_on_redirect(data):
         data['sid'] = request.sid
-        #data = cpv2.get_redirect_msg(data)
-        msg = driver.create_local_task_message('bd.sd.@CPv2.redirect', data)
-        driver.inbox.put(msg)
+        redirect_msg = cpv2.get_redirect_msg(data)
+        data['__redirect_msg'] = redirect_msg
+
+        #pass user_token and pass it here
+        #for now will use CPV2 route meta and token
+
+        msg = driver.create_local_task_message('bd.@md.Slave.CPv2.redirected', data)
+
+        msg['route_meta']['origin']=driver.uuid
+        driver.send_message_to_master(msg)
+
 
 
     @staticmethod
